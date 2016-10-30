@@ -78,7 +78,7 @@ param_list:	param_list COMMA param                       {$$ = new_subtree("para
 ;
 
 param:	INT ID                                           {$$ = new_subtree("param", 2, $1, $2);}
-	|	INT ID LBRACK RBRACK                             {$$ = new_subtree("param", 2, $1, $2);}
+	|	INT ID LBRACK RBRACK                             {$$ = new_subtree("param", 4, $1, $2, $3, $4);}
 ;
 
 var_decl_list:	var_decl_list var_decl                   {$$ = new_subtree("var_decl_list", 2, $1, $2);}
@@ -180,7 +180,7 @@ int main()
 {
     //yydebug = 1; // Enter debug mode.
     if(!yyparse())
-        //print_dot(tree);
+        print_dot(tree);
   	     //printf("PARSE SUCESSFUL!\n");
 
     //print_AST(tree);
