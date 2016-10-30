@@ -15,7 +15,7 @@ AST* create_node(const char* data)
 {
     AST* node = (AST*) malloc(sizeof(struct node));
 
-    node->data_text = malloc(sizeof(data) + 1);
+    node->data_text = (char*) malloc(strlen(data) + 1);
     strcpy(node->data_text, data);
 
     node->num_nodes = 0;
@@ -59,7 +59,7 @@ void print_node(AST *node, int level)
 
 }
 
-void print_AST(AST *tree, int level)
+void print_AST(AST *tree)
 {
     print_node(tree, 0);
 }
@@ -119,36 +119,4 @@ void print_dot(AST *tree)
 //         case OVER_NODE:   sprintf(s, "%s", "/"); break;
 //         default: printf("Invalid node kind: %d!\n", node->kind);
 //     }
-// }
-//
-// int nr;
-//
-// int print_node_dot(DT *node)
-// {
-//     char s[10];
-//     int my_nr = nr++;
-//     node2str(node, s);
-//     printf("node%d[label=\"%s\"];\n", my_nr, s);
-//
-//     if (node->l != NULL)
-//     {
-//         int l_nr = print_node_dot(node->l);
-//         printf("node%d -> node%d;\n", my_nr, l_nr);
-//     }
-//
-//     if (node->r != NULL)
-//     {
-//         int r_nr = print_node_dot(node->r);
-//         printf("node%d -> node%d;\n", my_nr, r_nr);
-//     }
-//
-//     return my_nr;
-// }
-//
-// void print_dot(DT *tree)
-// {
-//     nr = 0;
-//     printf("digraph {\ngraph [ordering=\"out\"];\n");
-//     print_node_dot(tree);
-//     printf("}\n");
 // }

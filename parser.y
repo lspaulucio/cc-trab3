@@ -25,7 +25,7 @@ void yyerror(char const *s);
 
 extern int yylineno;
 
-AST *tree;
+AST *tree = NULL;
 
 %}
 
@@ -180,10 +180,10 @@ int main()
 {
     //yydebug = 1; // Enter debug mode.
     if(!yyparse())
-        print_dot(tree);
+        //print_dot(tree);
   	     //printf("PARSE SUCESSFUL!\n");
 
-
+    //print_AST(tree);
     free_tree(tree);
     return 0;
 }

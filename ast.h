@@ -76,7 +76,7 @@ void add_leaf(AST *node, AST *leaf);
 AST* new_subtree(const char* data, int cnt_nodes, ...);
 
 void print_node(AST *node, int level);
-void print_AST(AST *tree, int level);
+void print_AST(AST *tree);
 
 void free_tree(AST *tree);
 
