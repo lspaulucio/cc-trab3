@@ -8,6 +8,7 @@ struct node
 {
     char* data_text;
     int num_nodes;
+    int alocated_nodes;
     struct node **nodes;
 };
 
@@ -19,13 +20,20 @@ AST* create_node(const char* data)
     strcpy(node->data_text, data);
 
     node->num_nodes = 0;
+    node->alocated_nodes = 0;
     node->nodes = NULL;
     return node;
 }
 
 void add_leaf(AST *node, AST *leaf)
 {
-    node->nodes[node->num_nodes++] = leaf;
+	if(node->num_nodes >= node->alocated_nodes)
+	{
+      	node->nodes = realloc(node->nodes, sizeof(AST*) * ++(node->alocated_nodes));
+      	node->nodes[node->num_nodes++] = leaf;
+	}
+    	else
+		node->nodes[node->num_nodes++] = leaf;
 }
 
 AST* new_subtree(const char* data, int cnt_nodes, ...)
@@ -36,7 +44,9 @@ AST* new_subtree(const char* data, int cnt_nodes, ...)
     AST *node = create_node(data);
 
     //Aloca memoria para os n nodes passados como parametros
-    node->nodes =(AST**) malloc(sizeof(AST*) * cnt_nodes);
+    node->nodes = (AST**) malloc(sizeof(AST*) * cnt_nodes);
+
+    node->alocated_nodes = cnt_nodes;
 
     va_start(nodes_list, cnt_nodes);
 
@@ -54,7 +64,7 @@ void print_node(AST *node, int level)
 
     printf("%d: Node -- Addr: %p -- Text: %s -- Count: %d\n", level, node, node->data_text, node->num_nodes);
 
-    for(i = 0; i < node->num_nodes; i++)
+    for(i = 0; i < node->alocated_nodes; i++)
         print_node(node->nodes[i], level + 1);
 
 }
@@ -70,7 +80,7 @@ void free_tree(AST *tree)
 
     if (tree != NULL)
     {
-        for(i = 0; i < tree->num_nodes; i++)
+        for(i=0; i < tree->alocated_nodes; i++)
         {
             free_tree(tree->nodes[i]);
         }
@@ -91,7 +101,7 @@ int print_node_dot(AST *node)
 
     printf("node%d[label=\"%s\"];\n", my_nr, node->data_text);
 
-    for (i = 0; i < node->num_nodes; i++)
+    for (i = 0; i < node->alocated_nodes; i++)
     {
         int child_nr = print_node_dot(node->nodes[i]);
         printf("node%d -> node%d;\n", my_nr, child_nr);
