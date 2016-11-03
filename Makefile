@@ -15,6 +15,9 @@ gcc: scanner.c parser.c
 test: all
 	./test.sh
 
+dot:
+	dot -Tpdf saida.dot -o saida.pdf
+
 tar: clean
 	tar -cvzf $(AUTHOR).tar.gz Makefile parser.y scanner.l
 
