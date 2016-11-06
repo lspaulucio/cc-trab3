@@ -58,13 +58,13 @@ void free_lit_table(LitTable* lt) {
 typedef struct {
   char name[SYMBOL_MAX_SIZE];
   int line;
+  int arity;
+  int scope;
 } Entry;
 
 struct sym_table {
     Entry t[SYMBOL_TABLE_MAX_SIZE];
-    int scope;
     int size;
-    int arity;
 };
 
 SymTable* create_sym_table() {
@@ -76,7 +76,7 @@ SymTable* create_sym_table() {
 int lookup_var(SymTable* st, char* s, int scope) {
     int i;
     for (i = 0; i < st->size; i++) {
-        if (strcmp(st->t[i].name, s) == 0 && st->scope == scope)  {
+        if (strcmp(st->t[i].name, s) == 0 && st->t[i].scope == scope)  {
             return i;
         }
     }
@@ -93,13 +93,28 @@ int lookup_func(SymTable* st, char* s) {
     return -1;
 }
 
+int add_func(SymTable* st, char* s, int line, int arity) {
+    strcpy(st->t[st->size].name, s);
+    st->t[st->size].line = line;
+    int old_side = st->size;
+    st->t[st->size].scope = -1;
+    st->t[st->size].arity = arity;
+    st->size++;
+    return old_side;
+}
+
 int add_var(SymTable* st, char* s, int line, int scope) {
     strcpy(st->t[st->size].name, s);
     st->t[st->size].line = line;
     int old_side = st->size;
-    st->scope = scope;
+    st->t[st->size].arity = -1;
+    st->t[st->size].scope = scope;
     st->size++;
     return old_side;
+}
+
+int get_arity(SymTable *st, int i){
+    return st->t[i].arity;;
 }
 
 char* get_name(SymTable* st, int i) {

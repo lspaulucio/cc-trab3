@@ -25,8 +25,8 @@ int yylex(void);
 void yyerror(char const *s);
 void check_var(int i, int scope);
 void new_var(int i, int scope);
-void new_func(int i);
-void check_func(int i);
+void new_func(int i, int arity);
+void check_func(int i, int arity);
 
 extern int yylineno;
 
@@ -37,7 +37,8 @@ SymTable *aux = NULL;
 SymTable *ft = NULL; //Functions table
 
 int scope = 0;
-
+int decl_arity = 0;
+int call_arity = 0;
 %}
 
 %define api.value.type {AST*} // Type of variable yylval;
@@ -62,7 +63,7 @@ func_decl_list: func_decl_list func_decl                 {$$ = $1; add_leaf($1, 
 func_decl: func_header func_body                         {$$ = new_subtree("func_decl", 2, $1, $2); scope++;}
 ;
 
-func_header: ret_type ID LPAREN params RPAREN            {$$ = new_subtree("func_header", 3, $1, $2, $4); new_func(getPos($2));}
+func_header: ret_type ID LPAREN params RPAREN            {$$ = new_subtree("func_header", 3, $1, $2, $4); new_func(getPos($2), decl_arity); decl_arity = 0;}
 ;
 
 func_body: LBRACE opt_var_decl opt_stmt_list RBRACE      {$$ = new_subtree("func_body", 2, $2, $3);}
@@ -88,8 +89,8 @@ param_list:	param_list COMMA param                       {$$ = $1; add_leaf($1, 
 		|	param                                        {$$ = new_subtree("param_list", 1, $1);}
 ;
 
-param:	INT ID                                           {$$ = new_subtree("param", 2, $1, $2); new_var(getPos($2), scope);}
-	|	INT ID LBRACK RBRACK                             {$$ = new_subtree("param", 2, $1, $2); new_var(getPos($2), scope);}
+param:	INT ID                                           {$$ = new_subtree("param", 2, $1, $2); new_var(getPos($2), scope); decl_arity++;}
+	|	INT ID LBRACK RBRACK                             {$$ = new_subtree("param", 2, $1, $2); new_var(getPos($2), scope); decl_arity++;}
 ;
 
 var_decl_list:	var_decl_list var_decl                   {$$ = $1; add_leaf($1, $2);}
@@ -147,15 +148,15 @@ output_call: OUTPUT LPAREN arith_expr RPAREN             {$$ = $1; add_leaf($1, 
 write_call: WRITE LPAREN STRING RPAREN                   {$$ = new_subtree("write", 1, $3);}
 ;
 
-user_func_call:	ID LPAREN opt_arg_list RPAREN            {$$ = new_subtree("func_call", 2, $1, $3); check_func(getPos($1));}
+user_func_call:	ID LPAREN opt_arg_list RPAREN            {$$ = new_subtree("func_call", 2, $1, $3); check_func(getPos($1), call_arity); call_arity = 0; }
 ;
 
 opt_arg_list:	%empty                                   {$$ = new_subtree("arg_list", 0);}
 			|	arg_list                                 {$$ = $1;}
 ;
 
-arg_list: 	arg_list COMMA arith_expr                    {$$ = new_subtree("arg_list", 2, $1, $3);}
-		|	arith_expr                                   {$$ = new_subtree("arg_list", 1, $1);}
+arg_list: 	arg_list COMMA arith_expr                    {$$ = new_subtree("arg_list", 2, $1, $3); call_arity++;}
+		|	arith_expr                                   {$$ = new_subtree("arg_list", 1, $1); call_arity++;}
 ;
 
 bool_expr:	arith_expr bool_op arith_expr                {$$ = $2; add_leaf($2, $1); add_leaf($2, $3);}
@@ -190,7 +191,7 @@ void yyerror (char const *s)
 }
 
 // ////////////////////////////////////// SEMANTIC ERROR //////////////////////////////////
-void new_func(int i) {
+void new_func(int i, int arity) {
     char* name = get_name(aux, i);
     int line = get_line(aux, i);
     int idx = lookup_func(ft, name);
@@ -200,16 +201,24 @@ void new_func(int i) {
             line, name, get_line(ft, idx));
         exit(1);
     }
-
-    add_var(ft, name, line, 0);
+    add_func(ft, name, line, arity);
 }
 
-void check_func(int i) {
+void check_func(int i, int arity) {
     char* name = get_name(aux, i);
     int line = get_line(aux, i);
     int idx = lookup_func(ft, name);
+    int declared_arity;
+
     if (idx == -1) {
         printf("SEMANTIC ERROR (%d): function '%s' was not declared.\n", line, name);
+        exit(1);
+    }
+
+    declared_arity = get_arity(ft, idx);
+
+    if(declared_arity != arity){
+        printf("SEMANTIC ERROR (%d): function '%s' was called with %d arguments but declared with %d parameters.\n", line, name, arity, declared_arity);
         exit(1);
     }
 }
@@ -218,6 +227,7 @@ void check_var(int i, int scope) {
     char* name = get_name(aux, i);
     int line = get_line(aux, i);
     int idx = lookup_var(st, name, scope);
+
     if (idx == -1) {
         printf("SEMANTIC ERROR (%d): variable '%s' was not declared.\n", line, name);
         exit(1);

@@ -43,12 +43,15 @@ SymTable* create_sym_table();
 // No check is made by this function, so make sure to call 'lookup_var' first.
 // Returns the index where the variable was inserted.
 int add_var(SymTable* st, char* s, int line, int scope);
+int add_func(SymTable* st, char* s, int line, int arity);
 
 // Returns the index where the given variable is stored or -1 otherwise.
 int lookup_var(SymTable* st, char* s, int scope);
 
 int lookup_func(SymTable* st, char* s);
 
+
+int get_arity(SymTable *st, int i);
 // Returns the variable name stored at the given index.
 // No check is made by this function, so make sure that the index is valid first.
 char* get_name(SymTable* st, int i);
