@@ -7,10 +7,45 @@
 struct node
 {
     char* data_text;
+    NodeKind type;
     int num_nodes;
     int alocated_nodes;
     struct node **nodes;
 };
+
+const char* STRING_NODEKIND[] =
+{
+    "PROGRAM_NODE",
+    "STMT_SEQUENCE_NODE",
+    "STMT_NODE",
+    "IF_STMT_NODE",
+    "REPEAT_STMT_NODE",
+    "ASSIGN_STMT_NODE",
+    "READ_STMT_NODE",
+    "WRITE_STMT_NODE",
+    "EXPR_NODE",
+    "LPAREN_NODE",
+    "RPAREN_NODE",
+    "IF_NODE",
+    "THEN_NODE",
+    "ELSE_NODE",
+    "END_NODE",
+    "REPEAT_NODE",
+    "UNTIL_NODE",
+    "READ_NODE",
+    "WRITE_NODE",
+    "EQ_NODE",
+    "LT_NODE",
+    "ASSIGN_NODE",
+    "SEMI_NODE",
+    "IDENTIFIER_NODE",
+    "NUMBER_NODE",
+    "PLUS_NODE",
+    "MINUS_NODE",
+    "TIMES_NODE",
+    "OVER_NODE"
+};
+
 
 AST* create_node(const char* data)
 {
@@ -18,7 +53,7 @@ AST* create_node(const char* data)
 
     node->data_text = (char*) malloc(strlen(data) + 1);
     strcpy(node->data_text, data);
-
+    node->type = -1;
     node->num_nodes = 0;
     node->alocated_nodes = 0;
     node->nodes = NULL;

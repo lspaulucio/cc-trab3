@@ -34,39 +34,6 @@ typedef enum
     OVER_NODE
 } NodeKind;
 
-// const char* STRING_NODEKIND[] =
-// {
-//     "PROGRAM_NODE",
-//     "STMT_SEQUENCE_NODE",
-//     "STMT_NODE",
-//     "IF_STMT_NODE",
-//     "REPEAT_STMT_NODE",
-//     "ASSIGN_STMT_NODE",
-//     "READ_STMT_NODE",
-//     "WRITE_STMT_NODE",
-//     "EXPR_NODE",
-//     "LPAREN_NODE",
-//     "RPAREN_NODE",
-//     "IF_NODE",
-//     "THEN_NODE",
-//     "ELSE_NODE",
-//     "END_NODE",
-//     "REPEAT_NODE",
-//     "UNTIL_NODE",
-//     "READ_NODE",
-//     "WRITE_NODE",
-//     "EQ_NODE",
-//     "LT_NODE",
-//     "ASSIGN_NODE",
-//     "SEMI_NODE",
-//     "IDENTIFIER_NODE",
-//     "NUMBER_NODE",
-//     "PLUS_NODE",
-//     "MINUS_NODE",
-//     "TIMES_NODE",
-//     "OVER_NODE"
-// };
-
 struct node; // Opaque structure to ensure encapsulation.
 
 typedef struct node AST;

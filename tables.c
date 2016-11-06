@@ -106,6 +106,8 @@ SymTable* create_sym_table()
     sym->sym_name = NULL;
     sym->next = NULL;
     sym->line = -1;
+
+    return sym;
 }
 
 // Adds a fresh var to the table.
@@ -191,7 +193,6 @@ int get_line(SymTable* st, int i)
 // Prints the given table to stdout.
 void print_sym_table(SymTable* st)
 {
-    int i = 0;
     printf("Symbols Table:\n");
     while(st != NULL)
     {

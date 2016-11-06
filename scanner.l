@@ -19,6 +19,9 @@
 
     void process(const char*);
 	void process_error();
+
+    extern LitTable *lt;
+    extern SymTable *aux;
 %}
 
 /*Palavras Reservadas*/
@@ -61,15 +64,15 @@ STRING \".*\"
 %x          L_COMMENT ML_COMMENT
 
 %%
-{ELSE} {process_token(ELSE);}
-{IF} {process_token(IF);}
+{ELSE} {return ELSE;}
+{IF} {return IF;}
 {INPUT} {process_token(INPUT);}
 {INT} {process_token(INT);}
 {OUTPUT} {process_token(OUTPUT);}
 {RETURN} {process_token(RETURN);}
 {VOID} {process_token(VOID);}
-{WHILE} {process_token(WHILE);}
-{WRITE} {process_token(WRITE);}
+{WHILE} {return WHILE;}
+{WRITE} {return WRITE;}
 
 {PLUS} {process_token(PLUS);}
 {MINUS} {process_token(MINUS);}
@@ -81,19 +84,19 @@ STRING \".*\"
 {GE} {process_token(GE);}
 {EQ} {process_token(EQ);}
 {NEQ} {process_token(NEQ);}
-{ASSIGN} {process_token(ASSIGN);}
+{ASSIGN} {return ASSIGN;}
 
-{SEMI} {process_token(SEMI);}
-{COMMA} {process_token(COMMA);}
-{LPAREN} {process_token(LPAREN);}
-{RPAREN} {process_token(RPAREN);}
-{LBRACK} {process_token(LBRACK);}
-{RBRACK} {process_token(RBRACK);}
-{LBRACE} {process_token(LBRACE);}
-{RBRACE} {process_token(RBRACE);}
+{SEMI} {return SEMI;}
+{COMMA} {return COMMA;}
+{LPAREN} {return LPAREN;}
+{RPAREN} {return RPAREN;}
+{LBRACK} {return LBRACK;}
+{RBRACK} {return RBRACK;}
+{LBRACE} {return LBRACE;}
+{RBRACE} {return RBRACE;}
 {NUM} {process_token(NUM);}
 {ID} {process_token(ID);}
-{STRING} { process_token(STRING);}
+{STRING} { yylval = create_node("string"); return STRING;}
 "\n"            yylineno++; /* eat up a single line */
 
 [ \t]+          /* eat up whitespace */
@@ -112,9 +115,19 @@ STRING \".*\"
 %%
 
 void process(const char* token)
-	{
+{
 		printf("%d: %s -> %s\n",yylineno, yytext, token);
-	}
+}
+
+/*void processId()
+{
+    yylval = add_var(aux, yytext, yylineno);
+}
+
+void process_string()
+{
+    yylval = add_literal(lt, yytext);
+}*/
 
 void process_error()
 {
