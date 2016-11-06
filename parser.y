@@ -251,7 +251,7 @@ void new_var(int i, int scope) {
 
 int main()
 {
-    //lt = NULL; //Literals Table
+    lt = create_lit_table();
     st = create_sym_table();
     aux = create_sym_table();
     ft = create_sym_table();
@@ -261,10 +261,13 @@ int main()
         //print_dot(tree);
   	     printf("PARSE SUCESSFUL!\n");
 
-    /*print_AST(tree);*/
+    //print_AST(tree);
+    //print_lit_table(lt);
+    //print_sym_table(st);
     free_tree(tree);
     free_sym_table(st);
     free_sym_table(aux);
     free_sym_table(ft);
+    free_lit_table(lt);
     return 0;
 }

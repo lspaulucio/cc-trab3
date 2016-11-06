@@ -97,7 +97,7 @@ STRING \".*\"
 {RBRACE} {return RBRACE;}
 {NUM} {process_token(NUM);}
 {ID} {yylval = create_node(yytext); setPos(yylval, add_var(aux, yytext, yylineno, scope)); return ID;}
-{STRING} {yylval = create_node("string"); return STRING;}
+{STRING} {yylval = create_node("string"); setPos(yylval, add_literal(lt, yytext)); return STRING;}
 "\n"            yylineno++; /* eat up a single line */
 
 [ \t]+          /* eat up whitespace */
@@ -119,16 +119,6 @@ void process(const char* token)
 {
 		printf("%d: %s -> %s\n",yylineno, yytext, token);
 }
-
-/*void processId()
-{
-    yylval = add_var(aux, yytext, yylineno);
-}
-
-void process_string()
-{
-    yylval = add_literal(lt, yytext);
-}*/
 
 void process_error()
 {
