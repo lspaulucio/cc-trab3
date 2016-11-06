@@ -8,44 +8,11 @@ struct node
 {
     char* data_text;
     NodeKind type;
+    int pos;
     int num_nodes;
     int alocated_nodes;
     struct node **nodes;
 };
-
-const char* STRING_NODEKIND[] =
-{
-    "PROGRAM_NODE",
-    "STMT_SEQUENCE_NODE",
-    "STMT_NODE",
-    "IF_STMT_NODE",
-    "REPEAT_STMT_NODE",
-    "ASSIGN_STMT_NODE",
-    "READ_STMT_NODE",
-    "WRITE_STMT_NODE",
-    "EXPR_NODE",
-    "LPAREN_NODE",
-    "RPAREN_NODE",
-    "IF_NODE",
-    "THEN_NODE",
-    "ELSE_NODE",
-    "END_NODE",
-    "REPEAT_NODE",
-    "UNTIL_NODE",
-    "READ_NODE",
-    "WRITE_NODE",
-    "EQ_NODE",
-    "LT_NODE",
-    "ASSIGN_NODE",
-    "SEMI_NODE",
-    "IDENTIFIER_NODE",
-    "NUMBER_NODE",
-    "PLUS_NODE",
-    "MINUS_NODE",
-    "TIMES_NODE",
-    "OVER_NODE"
-};
-
 
 AST* create_node(const char* data)
 {
@@ -54,12 +21,27 @@ AST* create_node(const char* data)
     node->data_text = (char*) malloc(strlen(data) + 1);
     strcpy(node->data_text, data);
     node->type = -1;
+    node->pos = -1;
     node->num_nodes = 0;
     node->alocated_nodes = 0;
     node->nodes = NULL;
     return node;
 }
 
+void setPos(AST* node, int p)
+{
+    node->pos = p;
+}
+
+int getPos(AST* node)
+{
+    return node->pos;
+}
+
+char* getName(AST* node)
+{
+    return node->data_text;
+}
 void add_leaf(AST *node, AST *leaf)
 {
 	if(node->num_nodes >= node->alocated_nodes)
@@ -165,3 +147,25 @@ void print_dot(AST *tree)
 //         default: printf("Invalid node kind: %d!\n", node->kind);
 //     }
 // }
+
+const char* STRING_NODEKIND[] =
+{
+    "program",
+    "func_list",
+    "func_decl",
+    "func_header",
+    "func_body",
+    "var_list",
+    "block",
+    "param_list",
+    "param",
+    "assign",
+    "if",
+    "while",
+    "return",
+    "write",
+    "func_call",
+    "arg_list",
+    "var_decl",
+    "lval",
+};

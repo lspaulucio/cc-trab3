@@ -22,6 +22,7 @@
 
     extern LitTable *lt;
     extern SymTable *aux;
+    extern int scope;
 %}
 
 /*Palavras Reservadas*/
@@ -64,15 +65,15 @@ STRING \".*\"
 %x          L_COMMENT ML_COMMENT
 
 %%
-{ELSE} {return ELSE;}
-{IF} {return IF;}
+{ELSE} {process_token(ELSE);}
+{IF} {process_token(IF);}
 {INPUT} {process_token(INPUT);}
 {INT} {process_token(INT);}
 {OUTPUT} {process_token(OUTPUT);}
 {RETURN} {process_token(RETURN);}
 {VOID} {process_token(VOID);}
-{WHILE} {return WHILE;}
-{WRITE} {return WRITE;}
+{WHILE} {process_token(WHILE);}
+{WRITE} {process_token(WRITE);}
 
 {PLUS} {process_token(PLUS);}
 {MINUS} {process_token(MINUS);}
@@ -84,7 +85,7 @@ STRING \".*\"
 {GE} {process_token(GE);}
 {EQ} {process_token(EQ);}
 {NEQ} {process_token(NEQ);}
-{ASSIGN} {return ASSIGN;}
+{ASSIGN} {process_token(ASSIGN);}
 
 {SEMI} {return SEMI;}
 {COMMA} {return COMMA;}
@@ -95,8 +96,8 @@ STRING \".*\"
 {LBRACE} {return LBRACE;}
 {RBRACE} {return RBRACE;}
 {NUM} {process_token(NUM);}
-{ID} {process_token(ID);}
-{STRING} { yylval = create_node("string"); return STRING;}
+{ID} {yylval = create_node(yytext); setPos(yylval, add_var(aux, yytext, yylineno, scope)); return ID;}
+{STRING} {yylval = create_node("string"); return STRING;}
 "\n"            yylineno++; /* eat up a single line */
 
 [ \t]+          /* eat up whitespace */

@@ -16,20 +16,27 @@
 %define parse.trace
 
 %{
+#include <stdlib.h>
 #include <stdio.h>
 #include "ast.h"
 #include "tables.h"
 
 int yylex(void);
 void yyerror(char const *s);
+void check_var(int i, int scope);
+void new_var(int i, int scope);
+void new_func(int i);
+void check_func(int i);
 
 extern int yylineno;
 
 AST *tree = NULL;    //AST
 LitTable *lt = NULL; //Literals Table
 SymTable *st = NULL; //Symbols Table
-SymTable *aux = NULL; 
+SymTable *aux = NULL;
 SymTable *ft = NULL; //Functions table
+
+int scope = 0;
 
 %}
 
@@ -45,17 +52,17 @@ SymTable *ft = NULL; //Functions table
 
 %%
 
-program: func_decl_list                                 {tree = $1;}
+program: func_decl_list                                  {tree = $1;}
 ;
 
 func_decl_list: func_decl_list func_decl                 {$$ = $1; add_leaf($1, $2);}
  			|	func_decl                                {$$ = new_subtree("func_list", 1, $1);}
 ;
 
-func_decl: func_header func_body                         {$$ = new_subtree("func_decl", 2, $1, $2);}
+func_decl: func_header func_body                         {$$ = new_subtree("func_decl", 2, $1, $2); scope++;}
 ;
 
-func_header: ret_type ID LPAREN params RPAREN            {$$ = new_subtree("func_header", 3, $1, $2, $4);}
+func_header: ret_type ID LPAREN params RPAREN            {$$ = new_subtree("func_header", 3, $1, $2, $4); new_func(getPos($2));}
 ;
 
 func_body: LBRACE opt_var_decl opt_stmt_list RBRACE      {$$ = new_subtree("func_body", 2, $2, $3);}
@@ -81,16 +88,16 @@ param_list:	param_list COMMA param                       {$$ = $1; add_leaf($1, 
 		|	param                                        {$$ = new_subtree("param_list", 1, $1);}
 ;
 
-param:	INT ID                                           {$$ = new_subtree("param", 2, $1, $2);}
-	|	INT ID LBRACK RBRACK                             {$$ = new_subtree("param", 2, $1, $2);}
+param:	INT ID                                           {$$ = new_subtree("param", 2, $1, $2); new_var(getPos($2), scope);}
+	|	INT ID LBRACK RBRACK                             {$$ = new_subtree("param", 2, $1, $2); new_var(getPos($2), scope);}
 ;
 
 var_decl_list:	var_decl_list var_decl                   {$$ = $1; add_leaf($1, $2);}
 			|	var_decl                                 {$$ = new_subtree("var_list", 1, $1);}
 ;
 
-var_decl:	INT ID SEMI                                  {$$ = new_subtree("var_decl", 2, $1, $2);}
-		|	INT ID LBRACK NUM RBRACK SEMI                {$$ = new_subtree("var_decl", 3, $1, $2, $4);}
+var_decl:	INT ID SEMI                                  {$$ = new_subtree("var_decl", 2, $1, $2); new_var(getPos($2), scope);}
+		|	INT ID LBRACK NUM RBRACK SEMI                {$$ = new_subtree("var_decl", 3, $1, $2, $4); new_var(getPos($2), scope);}
 ;
 
 stmt_list: 	stmt_list stmt                               {$$ = $1; add_leaf($1, $2);}
@@ -107,9 +114,9 @@ stmt:	assign_stmt                                      {$$ = $1;}
 assign_stmt:	lval ASSIGN arith_expr SEMI              {$$ = new_subtree("=", 2, $1, $3);}
 ;
 
-lval:	ID                                               {$$ = $1;}
-	|	ID LBRACK NUM RBRACK                             {$$ = new_subtree("lval", 2, $1, $3);}
-	|	ID LBRACK ID RBRACK                              {$$ = new_subtree("lval", 2, $1, $3);}
+lval:	ID                                               {$$ = $1; check_var(getPos($1), scope);}
+	|	ID LBRACK NUM RBRACK                             {$$ = new_subtree("lval", 2, $1, $3); check_var(getPos($1), scope);}
+	|	ID LBRACK ID RBRACK                              {$$ = new_subtree("lval", 2, $1, $3); check_var(getPos($1), scope); check_var(getPos($3), scope);}
 ;
 
 if_stmt:	IF LPAREN bool_expr RPAREN block             {$$ = new_subtree("if_stmt", 2, $3, $5);}
@@ -140,7 +147,7 @@ output_call: OUTPUT LPAREN arith_expr RPAREN             {$$ = $1; add_leaf($1, 
 write_call: WRITE LPAREN STRING RPAREN                   {$$ = new_subtree("write", 1, $3);}
 ;
 
-user_func_call:	ID LPAREN opt_arg_list RPAREN            {$$ = new_subtree("user_func_call", 2, $1, $3);}
+user_func_call:	ID LPAREN opt_arg_list RPAREN            {$$ = new_subtree("func_call", 2, $1, $3); check_func(getPos($1));}
 ;
 
 opt_arg_list:	%empty                                   {$$ = new_subtree("arg_list", 0);}
@@ -175,21 +182,79 @@ arith_expr: LPAREN arith_expr RPAREN                     {$$ = $2;}
 
 %%
 
+
+// /////////////////////////////////////// PARSER ERROR ///////////////////////////////////
 void yyerror (char const *s)
 {
 	printf("PARSE ERROR (%d): %s\n", yylineno, s);
 }
 
+// ////////////////////////////////////// SEMANTIC ERROR //////////////////////////////////
+void new_func(int i) {
+    char* name = get_name(aux, i);
+    int line = get_line(aux, i);
+    int idx = lookup_func(ft, name);
+
+    if (idx != -1) {
+        printf("SEMANTIC ERROR (%d): function '%s' already declared at line %d.\n",
+            line, name, get_line(ft, idx));
+        exit(1);
+    }
+
+    add_var(ft, name, line, 0);
+}
+
+void check_func(int i) {
+    char* name = get_name(aux, i);
+    int line = get_line(aux, i);
+    int idx = lookup_func(ft, name);
+    if (idx == -1) {
+        printf("SEMANTIC ERROR (%d): function '%s' was not declared.\n", line, name);
+        exit(1);
+    }
+}
+
+void check_var(int i, int scope) {
+    char* name = get_name(aux, i);
+    int line = get_line(aux, i);
+    int idx = lookup_var(st, name, scope);
+    if (idx == -1) {
+        printf("SEMANTIC ERROR (%d): variable '%s' was not declared.\n", line, name);
+        exit(1);
+    }
+}
+
+void new_var(int i, int scope) {
+    char* name = get_name(aux, i);
+    int line = get_line(aux, i);
+    int idx = lookup_var(st, name, scope);
+
+    if (idx != -1) {
+        printf("SEMANTIC ERROR (%d): variable '%s' already declared at line %d.\n",
+            line, name, get_line(st, idx));
+        exit(1);
+    }
+
+    add_var(st, name, line, scope);
+}
 
 
 int main()
 {
+    //lt = NULL; //Literals Table
+    st = create_sym_table();
+    aux = create_sym_table();
+    ft = create_sym_table();
+
     //yydebug = 1; // Enter debug mode.
     if(!yyparse())
-        print_dot(tree);
-  	     //printf("PARSE SUCESSFUL!\n");
+        //print_dot(tree);
+  	     printf("PARSE SUCESSFUL!\n");
 
     /*print_AST(tree);*/
     free_tree(tree);
+    free_sym_table(st);
+    free_sym_table(aux);
+    free_sym_table(ft);
     return 0;
 }

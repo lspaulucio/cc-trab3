@@ -1,216 +1,123 @@
-#include "tables.h"
-#include <string.h>
-#include <stdio.h>
 #include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include "tables.h"
 
-////////////////////////////// LITERALS TABLE //////////////////////////////////
+// Literals Table
+// ----------------------------------------------------------------------------
 
-struct lit_table
-{
-    char *lit_name;
-    struct lit_table *next;
+#define LITERAL_MAX_SIZE 128
+#define LITERALS_TABLE_MAX_SIZE 100
+
+struct lit_table {
+    char t[LITERALS_TABLE_MAX_SIZE][LITERAL_MAX_SIZE];
+    int size;
 };
 
-LitTable* create_lit_table()
-{
-    LitTable *lit = (LitTable*) malloc(sizeof(struct lit_table));
-    lit->lit_name = NULL;
-    lit->next = NULL;
-    return lit;
+LitTable* create_lit_table() {
+    LitTable *lt = malloc(sizeof * lt);
+    lt->size = 0;
+    return lt;
 }
 
-// Adds the given string to the table without repetitions.
-// String 's' is copied internally.
-// Returns the index of the string in the table.
-int add_literal(LitTable* lt, char* s)
-{
-    int i = 0;
-
-    if(lt->lit_name == NULL)
-    {
-        lt->lit_name = malloc(sizeof(s) + 1);
-        strcpy(lt->lit_name, s);
-        return i;
-    }
-
-    while(lt->next != NULL)
-    {
-        if(strcmp(lt->lit_name, s) == 0)
-            return i;
-
-        i++;
-        lt = lt->next;
-    }
-
-    i++;
-    lt->next = create_lit_table();
-    lt = lt->next;
-    lt->lit_name = malloc(sizeof(s) + 1);
-    strcpy(lt->lit_name, s);
-    return i;
-}
-
-// Returns a pointer to the string stored at index 'i'.
-char* get_literal(LitTable* lt, int i)
-{
-    int pos = 0;
-
-    while(pos++ != i || lt != NULL)
-    {
-        lt = lt->next;
-    }
-
-    return lt->lit_name;
-}
-
-// Prints the given table to stdout.
-void print_lit_table(LitTable* lt)
-{
-    int i = 0;
-    printf("Literal Table:\n");
-    while(lt != NULL)
-    {
-        printf("%s: %d\n", lt->lit_name, i++);
-        lt = lt->next;
-    }
-}
-
-// Clear the allocated structure.
-void free_lit_table(LitTable* lt)
-{
-    LitTable *n;
-
-    while(lt != NULL)
-    {
-        n = lt->next;
-        free(lt->lit_name);
-        free(lt);
-        lt = n;
-    }
-}
-
-///////////////////////////////// SYMBOLS TABLE ////////////////////////////////
-
-// This table only stores the variable name and the declaration line.
-struct sym_table
-{
-    char* sym_name;
-    int line;
-    struct sym_table *next;
-};
-
-// Creates an empty symbol table.
-SymTable* create_sym_table()
-{
-    SymTable *sym = (SymTable*) malloc(sizeof(struct sym_table));
-    sym->sym_name = NULL;
-    sym->next = NULL;
-    sym->line = -1;
-
-    return sym;
-}
-
-// Adds a fresh var to the table.
-// No check is made by this function, so make sure to call 'lookup_var' first.
-// Returns the index where the variable was inserted.
-int add_var(SymTable* st, char* s, int line)
-{
-    int i = 0;
-
-    if(st->sym_name == NULL)
-    {
-        st->sym_name = malloc(sizeof(s) + 1);
-        strcpy(st->sym_name, s);
-        st->line = line;
-        return i;
-    }
-
-    while(st->next != NULL)
-    {
-        if(strcmp(st->sym_name, s) == 0)
-            return i;
-
-        i++;
-        st = st->next;
-    }
-
-    i++;
-    st->next = create_sym_table();
-    st = st->next;
-    st->sym_name = malloc(sizeof(s) + 1);
-    strcpy(st->sym_name, s);
-    st->line = line;
-    return i;
-}
-
-// Returns the index where the given variable is stored or -1 otherwise.
-int lookup_var(SymTable* st, char* s)
-{
-    int i = 0;
-
-    while(st != NULL)
-    {
-        if(strcmp(st->sym_name, s) == 0)
-        {
+int add_literal(LitTable* lt, char* s) {
+    int i;
+    for (i = 0; i < lt->size; i++) {
+        if (strcmp(lt->t[i], s) == 0) {
             return i;
         }
-
-        i++;
-        st = st->next;
     }
+    strcpy(lt->t[lt->size], s);
+    int old_side = lt->size;
+    lt->size++;
+    return old_side;
+}
 
+char* get_literal(LitTable* lt, int i) {
+    return lt->t[i];
+}
+
+void print_lit_table(LitTable* lt) {
+    int i;
+    printf("Literals table:\n");
+    for (i = 0; i < lt->size; i++) {
+        printf("Entry %d -- %s\n", i, get_literal(lt, i));
+    }
+}
+
+void free_lit_table(LitTable* lt) {
+    free(lt);
+}
+
+// Symbols Table
+// ----------------------------------------------------------------------------
+
+#define SYMBOL_MAX_SIZE 128
+#define SYMBOL_TABLE_MAX_SIZE 100
+
+typedef struct {
+  char name[SYMBOL_MAX_SIZE];
+  int line;
+} Entry;
+
+struct sym_table {
+    Entry t[SYMBOL_TABLE_MAX_SIZE];
+    int scope;
+    int size;
+    int arity;
+};
+
+SymTable* create_sym_table() {
+    SymTable *st = malloc(sizeof * st);
+    st->size = 0;
+    return st;
+}
+
+int lookup_var(SymTable* st, char* s, int scope) {
+    int i;
+    for (i = 0; i < st->size; i++) {
+        if (strcmp(st->t[i].name, s) == 0 && st->scope == scope)  {
+            return i;
+        }
+    }
     return -1;
 }
 
-// Returns the variable name stored at the given index.
-// No check is made by this function, so make sure that the index is valid first.
-char* get_name(SymTable* st, int i)
-{
-    int pos = 0;
-
-    while(pos++ != i || st != NULL)
-    {
-        st = st->next;
+int lookup_func(SymTable* st, char* s) {
+    int i;
+    for (i = 0; i < st->size; i++) {
+        if (strcmp(st->t[i].name, s) == 0)  {
+            return i;
+        }
     }
-
-    return st->sym_name;
+    return -1;
 }
 
-// Returns the declaration line of the variable stored at the given index.
-// No check is made by this function, so make sure that the index is valid first.
-int get_line(SymTable* st, int i)
-{
-    int pos = 0;
-
-    while(pos++ != i || st != NULL)
-    {
-        st = st->next;
-    }
-
-    return st->line;
+int add_var(SymTable* st, char* s, int line, int scope) {
+    strcpy(st->t[st->size].name, s);
+    st->t[st->size].line = line;
+    int old_side = st->size;
+    st->scope = scope;
+    st->size++;
+    return old_side;
 }
 
-// Prints the given table to stdout.
-void print_sym_table(SymTable* st)
-{
-    printf("Symbols Table:\n");
-    while(st != NULL)
-    {
-        printf("%s: %d\n", st->sym_name, st->line);
-        st = st->next;
+char* get_name(SymTable* st, int i) {
+    return st->t[i].name;
+}
+
+int get_line(SymTable* st, int i) {
+    return st->t[i].line;
+}
+
+void print_sym_table(SymTable* st) {
+    int i;
+    printf("Symbols table:\n");
+    for (i = 0; i < st->size; i++) {
+         printf("Entry %d -- name: %s, line: %d\n", i, get_name(st, i), get_line(st, i));
     }
 }
 
-// Clear the allocated structure.
-void free_sym_table(SymTable* st)
-{
-    SymTable *n;
-
-    while(st != NULL)
-    {
-        n = st->next;
-        free(st->sym_name);
-        free(st);
-        st = n;
-    }
+void free_sym_table(SymTable* st) {
+    free(st);
 }

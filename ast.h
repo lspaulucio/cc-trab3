@@ -4,34 +4,23 @@
 typedef enum
 {
     PROGRAM_NODE,
-    STMT_SEQUENCE_NODE,
-    STMT_NODE,
-    IF_STMT_NODE,
-    REPEAT_STMT_NODE,
-    ASSIGN_STMT_NODE,
-    READ_STMT_NODE,
-    WRITE_STMT_NODE,
-    EXPR_NODE,
-    LPAREN_NODE,
-    RPAREN_NODE,
-    IF_NODE,
-    THEN_NODE,
-    ELSE_NODE,
-    END_NODE,
-    REPEAT_NODE,
-    UNTIL_NODE,
-    READ_NODE,
-    WRITE_NODE,
-    EQ_NODE,
-    LT_NODE,
+    FUNC_LIST_NODE,
+    FUNC_DECL_NODE,
+    FUNC_HEADER_NODE,
+    FUNC_BODY_NODE,
+    VAR_LIST_NODE,
+    BLOCK_NODE,
+    PARAM_LIST_NODE,
+    PARAM_NODE,
     ASSIGN_NODE,
-    SEMI_NODE,
-    IDENTIFIER_NODE,
-    NUMBER_NODE,
-    PLUS_NODE,
-    MINUS_NODE,
-    TIMES_NODE,
-    OVER_NODE
+    IF_NODE,
+    WHILE_NODE,
+    RETURN_NODE,
+    WRITE_NODE,
+    FUNC_CALL_NODE,
+    ARG_LIST_NODE,
+    VAR_DECL_NODE,
+    LVAL_NODE,
 } NodeKind;
 
 struct node; // Opaque structure to ensure encapsulation.
@@ -39,6 +28,12 @@ struct node; // Opaque structure to ensure encapsulation.
 typedef struct node AST;
 
 AST* create_node(const char* data);
+void setPos_AST(AST *node, int p);
+
+void setPos(AST* node, int pos);
+int getPos(AST* node);
+char* getName(AST* node);
+
 void add_leaf(AST *node, AST *leaf);
 AST* new_subtree(const char* data, int cnt_nodes, ...);
 
