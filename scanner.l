@@ -15,11 +15,11 @@
     #include "tables.h"
     #include "parser.h"
 
-    #define process_token(type) yylval = create_node(yytext); return type
+    #define process_token(type) yylval = create_node(convertToNode(type)); return type
 
     void process(const char*);
 	void process_error();
-
+    NodeKind convertToNode(int i);
     extern LitTable *lt;
     extern SymTable *aux;
     extern int scope;
@@ -95,9 +95,9 @@ STRING \".*\"
 {RBRACK} {return RBRACK;}
 {LBRACE} {return LBRACE;}
 {RBRACE} {return RBRACE;}
-{NUM} {process_token(NUM);}
-{ID} {yylval = create_node(yytext); setPos(yylval, add_var(aux, yytext, yylineno, scope)); return ID;}
-{STRING} {yylval = create_node("string"); setPos(yylval, add_literal(lt, yytext)); return STRING;}
+{NUM} {yylval = create_node(convertToNode(NUM)); setPos(yylval, atoi(yytext)); return NUM;}
+{ID} {yylval = create_node(convertToNode(ID)); setPos(yylval, add_var(aux, yytext, yylineno, scope)); return ID;}
+{STRING} {yylval = create_node(convertToNode(STRING)); setPos(yylval, add_literal(lt, yytext)); return STRING;}
 "\n"            yylineno++; /* eat up a single line */
 
 [ \t]+          /* eat up whitespace */
@@ -114,6 +114,39 @@ STRING \".*\"
 . {process_error();}
 
 %%
+
+NodeKind convertToNode(int token)
+{
+    switch(token)
+    {
+        case ELSE: return ELSE_NODE;
+        case INT: return INT_NODE;
+        case INPUT: return INPUT_NODE;
+        case OUTPUT: return OUTPUT_NODE;
+        case VOID: return VOID_NODE;
+        case PLUS: return PLUS_NODE;
+        case MINUS:  return MINUS_NODE;
+        case TIMES:  return TIMES_NODE;
+        case OVER:   return OVER_NODE;
+        case LT: return LT_NODE;
+        case LE: return LE_NODE;
+        case GT: return GT_NODE;
+        case GE: return GE_NODE;
+        case EQ: return EQ_NODE;
+        case NEQ: return NEQ_NODE;
+        case NUM: return NUM_NODE;
+        case ID: return ID_NODE;
+        case STRING: return STRING_NODE;
+        case IF: return IF_NODE;
+        case RETURN: return RETURN_NODE;
+        case WHILE: return WHILE_NODE;
+        case WRITE: return WRITE_NODE;
+        case ASSIGN: return ASSIGN_NODE;
+
+        default: printf("Invalid node kind: %d!\n", token);
+                return -1;
+    }
+}
 
 void process(const char* token)
 {

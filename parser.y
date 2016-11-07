@@ -57,23 +57,23 @@ program: func_decl_list                                  {tree = $1;}
 ;
 
 func_decl_list: func_decl_list func_decl                 {$$ = $1; add_leaf($1, $2);}
- 			|	func_decl                                {$$ = new_subtree("func_list", 1, $1);}
+ 			|	func_decl                                {$$ = new_subtree(FUNC_LIST_NODE, 1, $1);}
 ;
 
-func_decl: func_header func_body                         {$$ = new_subtree("func_decl", 2, $1, $2); scope++;}
+func_decl: func_header func_body                         {$$ = new_subtree(FUNC_DECL_NODE, 2, $1, $2); scope++;}
 ;
 
-func_header: ret_type ID LPAREN params RPAREN            {$$ = new_subtree("func_header", 3, $1, $2, $4); new_func(getPos($2), decl_arity); decl_arity = 0;}
+func_header: ret_type ID LPAREN params RPAREN            {$$ = new_subtree(FUNC_HEADER_NODE, 3, $1, $2, $4); new_func(getPos($2), decl_arity); decl_arity = 0;}
 ;
 
-func_body: LBRACE opt_var_decl opt_stmt_list RBRACE      {$$ = new_subtree("func_body", 2, $2, $3);}
+func_body: LBRACE opt_var_decl opt_stmt_list RBRACE      {$$ = new_subtree(FUNC_BODY_NODE, 2, $2, $3);}
 ;
 
-opt_var_decl:	%empty                                   {$$ = new_subtree("var_list", 0);}
+opt_var_decl:	%empty                                   {$$ = new_subtree(VAR_LIST_NODE, 0);}
 			|	var_decl_list                            {$$ = $1;}
 ;
 
-opt_stmt_list:	%empty                                   {$$ = new_subtree("block", 0);}
+opt_stmt_list:	%empty                                   {$$ = new_subtree(BLOCK_NODE, 0);}
 			|	stmt_list                                {$$ = $1;}
 ;
 
@@ -86,23 +86,23 @@ params:	VOID                                             {$$ = $1;}
 ;
 
 param_list:	param_list COMMA param                       {$$ = $1; add_leaf($1, $3);}
-		|	param                                        {$$ = new_subtree("param_list", 1, $1);}
+		|	param                                        {$$ = new_subtree(PARAM_LIST_NODE, 1, $1);}
 ;
 
-param:	INT ID                                           {$$ = new_subtree("param", 2, $1, $2); new_var(getPos($2), scope); decl_arity++;}
-	|	INT ID LBRACK RBRACK                             {$$ = new_subtree("param", 2, $1, $2); new_var(getPos($2), scope); decl_arity++;}
+param:	INT ID                                           {$$ = $2; new_var(getPos($2), scope); decl_arity++;}
+	|	INT ID LBRACK RBRACK                             {$$ = $2; new_var(getPos($2), scope); decl_arity++;}
 ;
 
 var_decl_list:	var_decl_list var_decl                   {$$ = $1; add_leaf($1, $2);}
-			|	var_decl                                 {$$ = new_subtree("var_list", 1, $1);}
+			|	var_decl                                 {$$ = new_subtree(VAR_LIST_NODE, 1, $1);}
 ;
 
-var_decl:	INT ID SEMI                                  {$$ = new_subtree("var_decl", 2, $1, $2); new_var(getPos($2), scope);}
-		|	INT ID LBRACK NUM RBRACK SEMI                {$$ = new_subtree("var_decl", 3, $1, $2, $4); new_var(getPos($2), scope);}
+var_decl:	INT ID SEMI                                  {$$ = new_subtree(VAR_DECL_NODE, 2, $1, $2); new_var(getPos($2), scope);}
+		|	INT ID LBRACK NUM RBRACK SEMI                {$$ = new_subtree(VAR_DECL_NODE, 3, $1, $2, $4); new_var(getPos($2), scope);}
 ;
 
 stmt_list: 	stmt_list stmt                               {$$ = $1; add_leaf($1, $2);}
-		|	stmt                                         {$$ = new_subtree("block", 1, $1);}
+		|	stmt                                         {$$ = new_subtree(BLOCK_NODE, 1, $1);}
 ;
 
 stmt:	assign_stmt                                      {$$ = $1;}
@@ -112,26 +112,26 @@ stmt:	assign_stmt                                      {$$ = $1;}
 	|	func_call SEMI                                   {$$ = $1;}
 ;
 
-assign_stmt:	lval ASSIGN arith_expr SEMI              {$$ = new_subtree("=", 2, $1, $3);}
+assign_stmt:	lval ASSIGN arith_expr SEMI              {$$ = new_subtree(ASSIGN_NODE, 2, $1, $3);}
 ;
 
-lval:	ID                                               {$$ = $1; check_var(getPos($1), scope);}
-	|	ID LBRACK NUM RBRACK                             {$$ = new_subtree("lval", 2, $1, $3); check_var(getPos($1), scope);}
-	|	ID LBRACK ID RBRACK                              {$$ = new_subtree("lval", 2, $1, $3); check_var(getPos($1), scope); check_var(getPos($3), scope);}
+lval:	ID                                               {$$ = new_subtree(SVAR_NODE, 0); setPos($$, lookup_var(st, get_name(aux, getPos($1)), scope)); check_var(getPos($1), scope);}
+	|	ID LBRACK NUM RBRACK                             {$$ = new_subtree(CVAR_NODE, 1, $3); check_var(getPos($1), scope); setPos($$, lookup_var(st, get_name(aux, getPos($1)), scope)); }
+	|	ID LBRACK ID RBRACK                              {$$ = new_subtree(CVAR_NODE, 1, $3); check_var(getPos($1), scope); check_var(getPos($3), scope); setPos($$, lookup_var(st, get_name(aux, getPos($1)), scope)); setPos($3, lookup_var(st, get_name(aux, getPos($3)), scope));}
 ;
 
-if_stmt:	IF LPAREN bool_expr RPAREN block             {$$ = new_subtree("if_stmt", 2, $3, $5);}
-		|	IF LPAREN bool_expr RPAREN block ELSE block  {$$ = new_subtree("if_stmt", 3, $3, $5, $7);}
+if_stmt:	IF LPAREN bool_expr RPAREN block             {$$ = new_subtree(IF_NODE, 2, $3, $5);}
+		|	IF LPAREN bool_expr RPAREN block ELSE block  {$$ = new_subtree(IF_NODE, 3, $3, $5, $7);}
 ;
 
 block:	LBRACE opt_stmt_list RBRACE                      {$$ = $2;}
 ;
 
-while_stmt: WHILE LPAREN bool_expr RPAREN block          {$$ = new_subtree("while_stmt", 2, $3, $5);}
+while_stmt: WHILE LPAREN bool_expr RPAREN block          {$$ = new_subtree(WHILE_NODE, 2, $3, $5);}
 ;
 
-return_stmt:	RETURN SEMI                              {$$ = new_subtree("return_stmt", 0);}
-			|	RETURN arith_expr SEMI                   {$$ = new_subtree("return_stmt", 1, $2);}
+return_stmt:	RETURN SEMI                              {$$ = new_subtree(RETURN_NODE, 0);}
+			|	RETURN arith_expr SEMI                   {$$ = new_subtree(RETURN_NODE, 1, $2);}
 ;
 
 func_call:	output_call                                  {$$ = $1;}
@@ -145,18 +145,18 @@ input_call: INPUT LPAREN RPAREN                          {$$ = $1;}
 output_call: OUTPUT LPAREN arith_expr RPAREN             {$$ = $1; add_leaf($1, $3);}
 ;
 
-write_call: WRITE LPAREN STRING RPAREN                   {$$ = new_subtree("write", 1, $3);}
+write_call: WRITE LPAREN STRING RPAREN                   {$$ = new_subtree(WRITE_NODE, 1, $3);}
 ;
 
-user_func_call:	ID LPAREN opt_arg_list RPAREN            {$$ = new_subtree("func_call", 2, $1, $3); check_func(getPos($1), call_arity); call_arity = 0; }
+user_func_call:	ID LPAREN opt_arg_list RPAREN            {$$ = new_subtree(FUNC_CALL_NODE, 2, $1, $3); check_func(getPos($1), call_arity); call_arity = 0; }
 ;
 
-opt_arg_list:	%empty                                   {$$ = new_subtree("arg_list", 0);}
+opt_arg_list:	%empty                                   {$$ = new_subtree(ARG_LIST_NODE, 0);}
 			|	arg_list                                 {$$ = $1;}
 ;
 
-arg_list: 	arg_list COMMA arith_expr                    {$$ = new_subtree("arg_list", 2, $1, $3); call_arity++;}
-		|	arith_expr                                   {$$ = new_subtree("arg_list", 1, $1); call_arity++;}
+arg_list: 	arg_list COMMA arith_expr                    {$$ = new_subtree(ARG_LIST_NODE, 2, $1, $3); call_arity++;}
+		|	arith_expr                                   {$$ = new_subtree(ARG_LIST_NODE, 1, $1); call_arity++;}
 ;
 
 bool_expr:	arith_expr bool_op arith_expr                {$$ = $2; add_leaf($2, $1); add_leaf($2, $3);}
@@ -258,8 +258,8 @@ int main()
 
     //yydebug = 1; // Enter debug mode.
     if(!yyparse())
-        //print_dot(tree);
-  	     printf("PARSE SUCESSFUL!\n");
+        print_dot(tree);
+  	     /*printf("PARSE SUCESSFUL!\n");*/
 
     //print_AST(tree);
     //print_lit_table(lt);

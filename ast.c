@@ -6,7 +6,7 @@
 
 struct node
 {
-    char* data_text;
+    // char* data_text;
     NodeKind type;
     int pos;
     int num_nodes;
@@ -14,13 +14,13 @@ struct node
     struct node **nodes;
 };
 
-AST* create_node(const char* data)
+AST* create_node(int type)
 {
     AST* node = (AST*) malloc(sizeof(struct node));
 
-    node->data_text = (char*) malloc(strlen(data) + 1);
-    strcpy(node->data_text, data);
-    node->type = -1;
+    // node->data_text = (char*) malloc(strlen(data) + 1);
+    // strcpy(node->data_text, data);
+    node->type = type;
     node->pos = -1;
     node->num_nodes = 0;
     node->alocated_nodes = 0;
@@ -38,10 +38,11 @@ int getPos(AST* node)
     return node->pos;
 }
 
-char* getName(AST* node)
-{
-    return node->data_text;
-}
+// char* getName(AST* node)
+// {
+//     return node->data_text;
+// }
+
 void add_leaf(AST *node, AST *leaf)
 {
 	if(node->num_nodes >= node->alocated_nodes)
@@ -53,12 +54,12 @@ void add_leaf(AST *node, AST *leaf)
 		node->nodes[node->num_nodes++] = leaf;
 }
 
-AST* new_subtree(const char* data, int cnt_nodes, ...)
+AST* new_subtree(int type, int cnt_nodes, ...)
 {
     int i;
     va_list nodes_list;
 
-    AST *node = create_node(data);
+    AST *node = create_node(type);
 
     //Aloca memoria para os n nodes passados como parametros
     node->nodes = (AST**) malloc(sizeof(AST*) * cnt_nodes);
@@ -75,11 +76,62 @@ AST* new_subtree(const char* data, int cnt_nodes, ...)
     return node;
 }
 
+const char* STRING_NODEKIND[] =
+{
+    "else",
+    "int",
+    "input",
+    "output",
+    "void",
+    "+",
+    "-",
+    "*",
+    "/",
+    "<",
+    "<=",
+    ">",
+    ">=",
+    "=",
+    "!=",
+    "num",
+    "id",
+    "string",
+    ";",
+    ",",
+    "(",
+    ")",
+    "[",
+    "]",
+    "{",
+    "}",
+
+    "program",
+    "func_list",
+    "func_decl",
+    "func_header",
+    "func_body",
+    "var_list",
+    "block",
+    "param_list",
+    "param",
+    "=",
+    "if",
+    "while",
+    "return",
+    "write",
+    "func_call",
+    "arg_list",
+    "var_decl",
+    "lval",
+    "svar",
+    "cvar"
+};
+
 void print_node(AST *node, int level)
 {
     int i;
 
-    printf("%d: Node -- Addr: %p -- Text: %s -- Count: %d\n", level, node, node->data_text, node->num_nodes);
+    printf("%d: Node -- Addr: %p -- Text: %s -- Count: %d\n", level, node, STRING_NODEKIND[node->type], node->num_nodes);
 
     for(i = 0; i < node->alocated_nodes; i++)
         print_node(node->nodes[i], level + 1);
@@ -101,7 +153,7 @@ void free_tree(AST *tree)
         {
             free_tree(tree->nodes[i]);
         }
-        free(tree->data_text);
+        // free(tree->data_text);
         free(tree->nodes);
         free(tree);
     }
@@ -115,8 +167,10 @@ int print_node_dot(AST *node)
 {
     int my_nr = nr++;
     int i;
+    char s[50];
 
-    printf("node%d[label=\"%s\"];\n", my_nr, node->data_text);
+    node2str(node, s);
+    printf("node%d[label=\"%s\"];\n", my_nr, s);
 
     for (i = 0; i < node->alocated_nodes; i++)
     {
@@ -135,37 +189,17 @@ void print_dot(AST *tree)
     printf("}\n");
 }
 
-// void node2str(DT *node, char *s)
-// {
-//     switch(node->kind)
-//     {
-//         case NUMBER_NODE: sprintf(s, "%d", node->data); break;
-//         case PLUS_NODE:   sprintf(s, "%s", "+"); break;
-//         case MINUS_NODE:  sprintf(s, "%s", "-"); break;
-//         case TIMES_NODE:  sprintf(s, "%s", "*"); break;
-//         case OVER_NODE:   sprintf(s, "%s", "/"); break;
-//         default: printf("Invalid node kind: %d!\n", node->kind);
-//     }
-// }
-
-const char* STRING_NODEKIND[] =
+void node2str(AST *node, char *s)
 {
-    "program",
-    "func_list",
-    "func_decl",
-    "func_header",
-    "func_body",
-    "var_list",
-    "block",
-    "param_list",
-    "param",
-    "assign",
-    "if",
-    "while",
-    "return",
-    "write",
-    "func_call",
-    "arg_list",
-    "var_decl",
-    "lval",
-};
+    switch(node->type)
+    {
+        case NUM_NODE: sprintf(s, "%s, %d", STRING_NODEKIND[node->type], node->pos); break;
+        case SVAR_NODE: sprintf(s, "%s, %d", STRING_NODEKIND[node->type], node->pos); break;
+        case CVAR_NODE: sprintf(s, "%s, %d", STRING_NODEKIND[node->type], node->pos); break;
+        case ID_NODE: sprintf(s, "%s, %d", STRING_NODEKIND[node->type], node->pos); break;
+
+
+        default:
+            sprintf(s, "%s", STRING_NODEKIND[node->type]);
+    }
+}
