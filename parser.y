@@ -63,7 +63,7 @@ func_decl_list: func_decl_list func_decl                 {$$ = $1; add_leaf($1, 
 func_decl: func_header func_body                         {$$ = new_subtree(FUNC_DECL_NODE, 2, $1, $2); scope++;}
 ;
 
-func_header: ret_type ID LPAREN params RPAREN            {$$ = new_subtree(FUNC_HEADER_NODE, 3, $1, $2, $4); new_func(getPos($2), decl_arity); decl_arity = 0;}
+func_header: ret_type ID LPAREN params RPAREN            {$$ = new_subtree(FUNC_HEADER_NODE, 3, $1, $2, $4); new_func(getPos($2), decl_arity); decl_arity = 0; setPos($2, lookup_func(ft, get_name(aux, getPos($2))));}
 ;
 
 func_body: LBRACE opt_var_decl opt_stmt_list RBRACE      {$$ = new_subtree(FUNC_BODY_NODE, 2, $2, $3);}
@@ -89,16 +89,16 @@ param_list:	param_list COMMA param                       {$$ = $1; add_leaf($1, 
 		|	param                                        {$$ = new_subtree(PARAM_LIST_NODE, 1, $1);}
 ;
 
-param:	INT ID                                           {$$ = $2; new_var(getPos($2), scope); decl_arity++;}
-	|	INT ID LBRACK RBRACK                             {$$ = $2; new_var(getPos($2), scope); decl_arity++;}
+param:	INT ID                                           {new_var(getPos($2), scope); decl_arity++; $$ = create_node_aux(SVAR_NODE, lookup_var(st, get_name(aux, getPos($2)), scope));}
+	|	INT ID LBRACK RBRACK                             {new_var(getPos($2), scope); decl_arity++; $$ = create_node_aux(CVAR_NODE, lookup_var(st, get_name(aux, getPos($2)), scope));}
 ;
 
 var_decl_list:	var_decl_list var_decl                   {$$ = $1; add_leaf($1, $2);}
 			|	var_decl                                 {$$ = new_subtree(VAR_LIST_NODE, 1, $1);}
 ;
 
-var_decl:	INT ID SEMI                                  {$$ = new_subtree(VAR_DECL_NODE, 2, $1, $2); new_var(getPos($2), scope);}
-		|	INT ID LBRACK NUM RBRACK SEMI                {$$ = new_subtree(VAR_DECL_NODE, 3, $1, $2, $4); new_var(getPos($2), scope);}
+var_decl:	INT ID SEMI                                  {new_var(getPos($2), scope); $$ = create_node_aux(SVAR_NODE, lookup_var(st, get_name(aux, getPos($2)), scope));}
+		|	INT ID LBRACK NUM RBRACK SEMI                {new_var(getPos($2), scope); $$ = create_node_aux(CVAR_NODE, lookup_var(st, get_name(aux, getPos($2)), scope)); add_leaf($$, $4);}
 ;
 
 stmt_list: 	stmt_list stmt                               {$$ = $1; add_leaf($1, $2);}
@@ -115,9 +115,9 @@ stmt:	assign_stmt                                      {$$ = $1;}
 assign_stmt:	lval ASSIGN arith_expr SEMI              {$$ = new_subtree(ASSIGN_NODE, 2, $1, $3);}
 ;
 
-lval:	ID                                               {$$ = new_subtree(SVAR_NODE, 0); setPos($$, lookup_var(st, get_name(aux, getPos($1)), scope)); check_var(getPos($1), scope);}
-	|	ID LBRACK NUM RBRACK                             {$$ = new_subtree(CVAR_NODE, 1, $3); check_var(getPos($1), scope); setPos($$, lookup_var(st, get_name(aux, getPos($1)), scope)); }
-	|	ID LBRACK ID RBRACK                              {$$ = new_subtree(CVAR_NODE, 1, $3); check_var(getPos($1), scope); check_var(getPos($3), scope); setPos($$, lookup_var(st, get_name(aux, getPos($1)), scope)); setPos($3, lookup_var(st, get_name(aux, getPos($3)), scope));}
+lval:	ID                                               {$$ = new_subtree(SVAR_NODE, 0); check_var(getPos($1), scope); setPos($$, lookup_var(st, get_name(aux, getPos($1)), scope));}
+	|	ID LBRACK NUM RBRACK                             {$$ = new_subtree(CVAR_NODE, 1, $3); check_var(getPos($1), scope); setPos($$, lookup_var(st, get_name(aux, getPos($1)), scope));}
+	|	ID LBRACK ID RBRACK                              {$$ = new_subtree(CVAR_NODE, 0); check_var(getPos($1), scope); check_var(getPos($3), scope); setPos($$, lookup_var(st, get_name(aux, getPos($1)), scope)); add_leaf($$, create_node_aux(SVAR_NODE, lookup_var(st, get_name(aux, getPos($3)), scope)));}
 ;
 
 if_stmt:	IF LPAREN bool_expr RPAREN block             {$$ = new_subtree(IF_NODE, 2, $3, $5);}
@@ -148,14 +148,14 @@ output_call: OUTPUT LPAREN arith_expr RPAREN             {$$ = $1; add_leaf($1, 
 write_call: WRITE LPAREN STRING RPAREN                   {$$ = new_subtree(WRITE_NODE, 1, $3);}
 ;
 
-user_func_call:	ID LPAREN opt_arg_list RPAREN            {$$ = new_subtree(FUNC_CALL_NODE, 2, $1, $3); check_func(getPos($1), call_arity); call_arity = 0; }
+user_func_call:	ID LPAREN opt_arg_list RPAREN            {$$ = new_subtree(FUNC_CALL_NODE, 1, $3); check_func(getPos($1), call_arity); call_arity = 0; setPos($$, lookup_func(ft, get_name(aux, getPos($1))));}
 ;
 
 opt_arg_list:	%empty                                   {$$ = new_subtree(ARG_LIST_NODE, 0);}
 			|	arg_list                                 {$$ = $1;}
 ;
 
-arg_list: 	arg_list COMMA arith_expr                    {$$ = new_subtree(ARG_LIST_NODE, 2, $1, $3); call_arity++;}
+arg_list: 	arg_list COMMA arith_expr                    {$$ = $1; add_leaf($1, $3); call_arity++;}
 		|	arith_expr                                   {$$ = new_subtree(ARG_LIST_NODE, 1, $1); call_arity++;}
 ;
 

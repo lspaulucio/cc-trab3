@@ -57,6 +57,7 @@ struct node; // Opaque structure to ensure encapsulation.
 typedef struct node AST;
 
 AST* create_node(int type);
+AST* create_node_aux(int type, int pos);
 void setPos_AST(AST *node, int p);
 
 void setPos(AST* node, int pos);

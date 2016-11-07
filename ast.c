@@ -28,6 +28,20 @@ AST* create_node(int type)
     return node;
 }
 
+AST* create_node_aux(int type, int pos)
+{
+    AST* node = (AST*) malloc(sizeof(struct node));
+
+    // node->data_text = (char*) malloc(strlen(data) + 1);
+    // strcpy(node->data_text, data);
+    node->type = type;
+    node->pos = pos;
+    node->num_nodes = 0;
+    node->alocated_nodes = 0;
+    node->nodes = NULL;
+    return node;
+}
+
 void setPos(AST* node, int p)
 {
     node->pos = p;
@@ -119,7 +133,7 @@ const char* STRING_NODEKIND[] =
     "while",
     "return",
     "write",
-    "func_call",
+    "fcall",
     "arg_list",
     "var_decl",
     "lval",
@@ -197,6 +211,8 @@ void node2str(AST *node, char *s)
         case SVAR_NODE: sprintf(s, "%s, %d", STRING_NODEKIND[node->type], node->pos); break;
         case CVAR_NODE: sprintf(s, "%s, %d", STRING_NODEKIND[node->type], node->pos); break;
         case ID_NODE: sprintf(s, "%s, %d", STRING_NODEKIND[node->type], node->pos); break;
+        case STRING_NODE: sprintf(s, "%s, %d", STRING_NODEKIND[node->type], node->pos); break;
+        case FUNC_CALL_NODE: sprintf(s, "%s, %d", STRING_NODEKIND[node->type], node->pos); break;
 
 
         default:
