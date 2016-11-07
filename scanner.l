@@ -109,7 +109,7 @@ STRING \".*\"
 "/*"                 BEGIN(ML_COMMENT); /* multi-line comments */
 <ML_COMMENT>[^\n] /* eat anything that’s not a \n */
 <ML_COMMENT>"\n"    yylineno++;
-<ML_COMMENT>"*/"\n    BEGIN(INITIAL);
+<ML_COMMENT>"*/"    BEGIN(INITIAL);
 
 . {process_error();}
 

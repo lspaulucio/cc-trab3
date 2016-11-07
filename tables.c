@@ -125,11 +125,23 @@ int get_line(SymTable* st, int i) {
     return st->t[i].line;
 }
 
+int get_scope(SymTable* st, int i) {
+    return st->t[i].scope;
+}
+
 void print_sym_table(SymTable* st) {
     int i;
     printf("Symbols table:\n");
     for (i = 0; i < st->size; i++) {
-         printf("Entry %d -- name: %s, line: %d\n", i, get_name(st, i), get_line(st, i));
+         printf("Entry %d -- name: %s, line: %d, scope: %d\n", i, get_name(st, i), get_line(st, i), get_scope(st,i));
+    }
+}
+
+void print_func_table(SymTable* st) {
+    int i;
+    printf("Symbols table:\n");
+    for (i = 0; i < st->size; i++) {
+         printf("Entry %d -- name: %s, line: %d, arity: %d\n", i, get_name(st, i), get_line(st, i), get_arity(st,i));
     }
 }
 
