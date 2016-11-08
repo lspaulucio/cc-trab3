@@ -258,12 +258,13 @@ int main()
 
     //yydebug = 1; // Enter debug mode.
     if(!yyparse())
-        print_dot(tree);
-  	     /*printf("PARSE SUCESSFUL!\n");*/
+        printf("PARSE SUCESSFUL!\n");
+  	     //print_dot(tree);
 
     //print_AST(tree);
     //print_lit_table(lt);
     //print_sym_table(st);
+    //print_func_table(ft);
     free_tree(tree);
     free_sym_table(st);
     free_sym_table(aux);
