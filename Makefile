@@ -19,7 +19,7 @@ dot:
 	dot -Tpdf saida.dot -o saida.pdf
 
 tar: clean
-	tar -cvzf $(AUTHOR).tar.gz Makefile parser.y scanner.l
+	tar -cvzf $(AUTHOR).tar.gz Makefile parser.y scanner.l ast.c ast.h tables.c tables.h
 
 clean:
 	@rm -f *.o *.output scanner.c parser.h parser.c parser trab3
