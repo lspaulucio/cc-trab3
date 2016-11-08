@@ -105,7 +105,7 @@ const char* STRING_NODEKIND[] =
     "<=",
     ">",
     ">=",
-    "=",
+    "==",
     "!=",
     "num",
     "id",

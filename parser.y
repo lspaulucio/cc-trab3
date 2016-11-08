@@ -81,7 +81,7 @@ ret_type: 	INT                                          {$$ = $1;}
 		|	VOID                                         {$$ = $1;}
 ;
 
-params:	VOID                                             {$$ = $1;}
+params:	VOID                                             {$$ = new_subtree(PARAM_LIST_NODE,0);}
 	|	param_list                                       {$$ = $1;}
 ;
 
